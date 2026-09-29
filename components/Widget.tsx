@@ -163,7 +163,7 @@ export default function Widget() {
           className="anim-panel fixed inset-0 z-50 flex flex-col overflow-hidden bg-papir sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[min(700px,calc(100dvh-3rem))] sm:w-[400px] sm:rounded-3xl sm:border sm:border-strek sm:shadow-[0_24px_60px_-20px_rgba(16,48,47,0.45)]"
         >
           <header className="relative flex items-center gap-3 bg-blekk px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] text-papir">
-            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-papir/10 font-display text-xl italic">S</div>
+            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-papir/10 font-display text-xl italic">T</div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="truncate font-display text-[17px] leading-tight sm:text-[19px]">

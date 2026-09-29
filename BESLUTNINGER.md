@@ -21,7 +21,7 @@ Next.js (App Router, TypeScript, Tailwind) på Vercel. Upstash Redis lagrer book
 
 ### Antakelser om klinikkdriften (bekreft med eierne)
 - **Varigheter:** undersøkelse 45 min, fylling 30/45/60 min for 1/2/3 flater, rotfylling 90 min, ukomplisert trekking 45 min, akutt 30 min, etterkontroll 15 min.
-- **Behandlere:** tannpleier (Emma Dahl) tar undersøkelse og rens. Tannlegene tar alt.
+- **Behandlere:** tannpleieren tar undersøkelse og rens. Tannlegene tar alt.
 - **Ikke bookbart på nett:** kirurgisk fjerning, krone, fasade og OPG. Disse avtales etter undersøkelse.
 - **Kalender:** lunsj 11:30–12:00, og 2 akutt-tider holdes av hver dag. Kalenderen fylles med tilfeldige opptatte tider (fast seed), så den ser realistisk ut og evalen blir deterministisk.
 - **Rotfylling:** varigheten er 90 min uansett antall kanaler. Prisen oppgis per antall kanaler fra prislisten.
