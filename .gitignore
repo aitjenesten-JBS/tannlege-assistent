@@ -53,3 +53,7 @@ next-env.d.ts
 # Lokal fil med admin-lenke (inneholder nøkkel)
 /ADMIN-LENKE.txt
 /SOKNADSTEKST.txt
+
+# AI-skills installert av Upstash-integrasjonen (ikke en del av prosjektet)
+/.agents/
+/skills-lock.json
