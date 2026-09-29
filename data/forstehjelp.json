@@ -1,0 +1,20 @@
+[
+  {
+    "id": "utslatt_tann",
+    "situasjon": "Permanent tann slått ut",
+    "rad": "Ta tak i toppen av tannen, ikke rør roten. Er den skitten, kan den skylles under rennende vann. Sett tannen på plass, eller oppbevar den i munnen eller i melk. Kontakt tannlege så raskt som mulig.",
+    "kilde": "https://www.helsenorge.no/tannhelse/akutte-tannskader/"
+  },
+  {
+    "id": "knekt_tann",
+    "situasjon": "Knekt tann",
+    "rad": "Oppsøk tannlege om du knekker en tann. Iser det bare når du trekker inn luft, eller er tannen bare litt øm, kan kontroll ofte vente til neste dag.",
+    "kilde": "https://www.helsenorge.no/tannhelse/akutte-tannskader/"
+  },
+  {
+    "id": "blodning_munn",
+    "situasjon": "Blødning i munnen, også etter tanntrekking",
+    "rad": "Press en sammenrullet kompress eller et rent tøystykke mot stedet som blør, og bit sammen over den.",
+    "kilde": "https://nhi.no/forstehjelp/munn-og-fordoyelse/los-tann"
+  }
+]

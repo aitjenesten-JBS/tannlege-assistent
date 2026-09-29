@@ -166,7 +166,7 @@ export async function kjorTool(
             ? "Pasienten velger tid og fyller inn navn, telefon og e-post i skjemaet. Ikke be om kontaktinfo i chatten. Når bookingen er gjort, får du beskjed i en system-melding."
             : "Når pasienten har valgt, kommer valget som en melding. Kall da flytt_time med bookingkoden og telefonnummeret du allerede har.";
         return {
-          innhold: `Kalenderen vises nå under svaret ditt. Si i én setning at pasienten kan velge dag og tid i kalenderen. Ikke list opp tider selv. ${neste}`,
+          innhold: `Kalenderen vises nå under svaret ditt. Skriv svaret til pasienten nå. Har du ikke allerede skrevet det i en tekstmelding, ta med det reglene krever (f.eks. helsesetningen og henvisning til klinikken ved plager, og hva du setter opp med varighet og pris), og si i én setning at pasienten kan velge dag og tid i kalenderen. Ikke gjenta tekst du allerede har skrevet, og ikke list opp tider selv. ${neste}`,
           feil: false,
           tidsvelger,
         };

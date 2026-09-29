@@ -29,6 +29,7 @@ export interface Svar {
   stopp: string;
   tidsvelger?: Tidsvelger;
   kostnadUsd: number;
+  tokens: { input: number; cacheSkriv: number; cacheLes: number; output: number };
 }
 
 let klient: Anthropic | undefined;
@@ -62,9 +63,11 @@ export async function svar(samtaleId: string, brukertekst: string, naa = new Dat
   const toolKall: ToolKall[] = [];
   let tidsvelger: Tidsvelger | undefined;
   let kostnadUsd = 0;
+  const tokens = { input: 0, cacheSkriv: 0, cacheLes: 0, output: 0 };
+  const tekster: string[] = [];
 
   if (historikk.filter(erBrukertekst).length >= MAKS_BRUKERMELDINGER) {
-    return { tekst: `Samtalen er blitt lang. Start en ny samtale, eller ring klinikken på ${klinikk.telefon}.`, toolKall, stopp: "maks_lengde", kostnadUsd };
+    return { tekst: `Samtalen er blitt lang. Start en ny samtale, eller ring klinikken på ${klinikk.telefon}.`, toolKall, stopp: "maks_lengde", kostnadUsd, tokens };
   }
 
   // Kaster BudsjettOppbrukt før vi bruker penger. Ruten gjør det om til en vennlig melding.
@@ -86,16 +89,25 @@ ${hendelse}` : tidskontekst(naa) },
       fallbacks: "default",
       output_config: { effort: "low" },
       cache_control: { type: "ephemeral" },
-      system: [{ type: "text", text: SYSTEMPROMPT }],
+      // Bruddpunkt 1: verktøy + systemprompt er like i alle samtaler og caches på tvers av dem.
+      // Bruddpunkt 2 (automatisk, toppnivå): samtalen så langt, for neste runde i samme samtale.
+      system: [{ type: "text", text: SYSTEMPROMPT, cache_control: { type: "ephemeral" } }],
       tools,
       messages: [...historikk, ...nye],
     });
     kostnadUsd += await registrerForbruk(respons.usage);
+    tokens.input += respons.usage.input_tokens;
+    tokens.cacheSkriv += respons.usage.cache_creation_input_tokens ?? 0;
+    tokens.cacheLes += respons.usage.cache_read_input_tokens ?? 0;
+    tokens.output += respons.usage.output_tokens;
 
     // Avslag lagres ikke, så historikken forblir gyldig for neste melding.
-    if (respons.stop_reason === "refusal") return { tekst: AVSLAG, toolKall, stopp: "refusal", kostnadUsd };
+    if (respons.stop_reason === "refusal") return { tekst: AVSLAG, toolKall, stopp: "refusal", kostnadUsd, tokens };
 
     nye.push({ role: "assistant", content: respons.content });
+    // Tekst fra alle runder i løkken: modellen skriver ofte det viktigste (helsesetning,
+    // henvisning) før verktøykallet og bare en kort avslutning etter.
+    for (const b of respons.content) if (b.type === "text" && b.text.trim()) tekster.push(b.text.trim());
 
     if (respons.stop_reason === "tool_use") {
       const resultater: Anthropic.Beta.BetaToolResultBlockParam[] = [];
@@ -112,14 +124,10 @@ ${hendelse}` : tidskontekst(naa) },
       continue;
     }
 
-    const tekst = respons.content
-      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
+    const tekst = tekster.join("\n\n");
     await lager.lagre(nokkel, [...historikk, ...nye], SAMTALE_TTL_SEK);
-    return { tekst: tekst || TEKNISK_FEIL, toolKall, stopp: respons.stop_reason ?? "ukjent", tidsvelger, kostnadUsd };
+    return { tekst: tekst || TEKNISK_FEIL, toolKall, stopp: respons.stop_reason ?? "ukjent", tidsvelger, kostnadUsd, tokens };
   }
 
-  return { tekst: TEKNISK_FEIL, toolKall, stopp: "maks_runder", kostnadUsd };
+  return { tekst: TEKNISK_FEIL, toolKall, stopp: "maks_runder", kostnadUsd, tokens };
 }
