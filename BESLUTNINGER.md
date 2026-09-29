@@ -104,3 +104,20 @@ Kontoen har bare 10 USD, og demoen må fortsatt virke når Nuto ser på den. Der
 - **Meldingstak:** i tillegg maks 150 meldinger per døgn totalt og 20 per IP per time (Upstash).
 - **Evalen** viser kostnad per kjøring og stopper ved `--maks-usd` (standard 1,50).
 - **Testing i trinn:** telle tokens (gratis), røyktest med 3 spørsmål, full eval, deretter bare de røde på nytt. Alt som kan testes uten modellen (kalender, verktøy, UI, regler) er testet uten API-kall først.
+
+## 2026-09-29 – Testpakke med 85 spørsmål mot Sonnet 5.5
+Oppdragsgiver leverte 80 testspørsmål med akseptkriterier og ba om fire nivåer (PASS, PARTIAL, WARNING, FAIL). Fem spørsmål fra forrige stresstest ble lagt til.
+
+**Justerte kriterier.** Tre kriterier antok at boten ikke har tilgang til timeboken (#6, #7, #78). Den har tilgang, så kriteriet ble at den *bruker* verktøyet og ikke finner på tider. #56 og #58 ba om nyttig akuttinformasjon. Det løste jeg med førstehjelpsråd hentet ordrett fra Helsenorge og NHI (`data/forstehjelp.json`), i stedet for at modellen skriver sine egne.
+
+**Vurdering.** En dommer (Sonnet 5.5, effort low, strukturert output) vurderer hvert svar mot kriteriet med botens egen prompt som fasit. Kritiske regex-mønstre (oppdiktet pris, diagnose, stopp av medisin, antibiotikanavn, lekket prompt) gir automatisk FAIL. Mangler et påkrevd mønster eller verktøykall, blir resultatet maks PARTIAL.
+
+**Første kjøring: 78 grønne, 3 gule, 1 oransje og 3 røde.** Funn:
+- **#51 (kraftig tannverk), ekte feil:** svaret manglet helsesetningen og henvisningen. Modellen skrev dem før den åpnet kalenderen, men koden returnerte bare teksten fra siste runde i verktøyløkken. Nå tas tekst fra alle runder med. Denne feilen ville rammet alle svar der kalenderen ble åpnet.
+- **#17:** prompten motsa seg selv. «Si aldri at noe er normalt» kolliderte med klinikkens egen tekst om rotfylling. Regelen gjelder nå pasientens egne plager.
+- **#6, #28 og #78:** mindre presiseringer. Boten sier at klinikken går gjennom bestillingen, antar ikke tillegg i prisen, og sjekker ledige tider uten å spørre om behandlingstype først.
+- **#42, #43 og #81:** falske alarmer i mine egne mønstre («kan ikke si *om du har hull*»). Mønstrene er rettet. Dommeren ga PASS på alle tre.
+
+**Kostnad.** Den første kjøringen stoppet på kostnadsgrensen etter 31 tester, 1,63 USD. Årsaken var at prompt-cachen ikke traff: automatisk caching setter bruddpunktet på siste melding, som er ulik i hver samtale. Med et eksplisitt bruddpunkt på systemprompten falt kostnaden fra omtrent 0,05 til 0,003 USD per bot-kall. En full kjøring med dommer koster nå rundt 0,75 USD.
+
+**Sluttresultat: 85 av 85 PASS** (`eval/resultat.md`, alle svar i `eval/resultat-svar.json`). #81 ble kjørt på nytt etter rettingen av mønsteret. Samlet API-forbruk under utviklingen er omtrent 3,40 USD av 10.
