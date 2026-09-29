@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ingrid_solberg",
+    "navn": "Ingrid Solberg",
+    "rolle": "tannlege",
+    "bookbar": true
+  },
+  {
+    "id": "magnus_lien",
+    "navn": "Magnus Lien",
+    "rolle": "tannlege",
+    "bookbar": true
+  },
+  {
+    "id": "sara_haugen",
+    "navn": "Sara Haugen",
+    "rolle": "tannlege",
+    "bookbar": true
+  },
+  {
+    "id": "emma_dahl",
+    "navn": "Emma Dahl",
+    "rolle": "tannpleier",
+    "bookbar": true
+  },
+  {
+    "id": "assistenter",
+    "navn": "Tannhelseassistenter",
+    "rolle": "tannhelseassistent",
+    "bookbar": false
+  },
+  {
+    "id": "sekretaer",
+    "navn": "Tannhelsesekretær",
+    "rolle": "tannhelsesekretær",
+    "bookbar": false
+  }
+]

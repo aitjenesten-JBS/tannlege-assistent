@@ -1,0 +1,98 @@
+[
+  {
+    "id": "undersokelse",
+    "navn": "Undersøkelse (2 røntgen, puss og lett rens)",
+    "pris_kr": 1450,
+    "merknad": null
+  },
+  {
+    "id": "fylling_1_flate",
+    "navn": "Fylling, 1 flate",
+    "pris_kr": 1340,
+    "merknad": null
+  },
+  {
+    "id": "fylling_2_flater",
+    "navn": "Fylling, 2 flater",
+    "pris_kr": 1650,
+    "merknad": null
+  },
+  {
+    "id": "fylling_3_flater",
+    "navn": "Fylling, 3 flater",
+    "pris_kr": 2090,
+    "merknad": null
+  },
+  {
+    "id": "rotfylling_1_kanal",
+    "navn": "Rotfylling, 1 kanal",
+    "pris_kr": 5210,
+    "merknad": null
+  },
+  {
+    "id": "rotfylling_2_kanaler",
+    "navn": "Rotfylling, 2 kanaler",
+    "pris_kr": 6690,
+    "merknad": null
+  },
+  {
+    "id": "rotfylling_3_4_kanaler",
+    "navn": "Rotfylling, 3–4 kanaler",
+    "pris_kr": 7210,
+    "merknad": null
+  },
+  {
+    "id": "trekking",
+    "navn": "Ukomplisert trekking",
+    "pris_kr": 1660,
+    "merknad": null
+  },
+  {
+    "id": "kirurgisk_fjerning",
+    "navn": "Kirurgisk fjerning",
+    "pris_kr": null,
+    "merknad": "Timehonorar – ta kontakt med klinikken for pris"
+  },
+  {
+    "id": "krone_jeksel",
+    "navn": "Helkeramisk krone, jeksel",
+    "pris_kr": 7690,
+    "merknad": null
+  },
+  {
+    "id": "porselensfasade",
+    "navn": "Porselensfasade",
+    "pris_kr": 7040,
+    "merknad": null
+  },
+  {
+    "id": "bedovelse",
+    "navn": "Bedøvelse",
+    "pris_kr": 240,
+    "merknad": null
+  },
+  {
+    "id": "etterkontroll",
+    "navn": "Etterkontroll",
+    "pris_kr": 640,
+    "merknad": null
+  },
+  {
+    "id": "midlertidig_fylling",
+    "navn": "Midlertidig fylling",
+    "pris_kr": 580,
+    "merknad": null
+  },
+  {
+    "id": "opg",
+    "navn": "OPG (panoramarøntgen)",
+    "pris_kr": 890,
+    "merknad": null
+  },
+  {
+    "id": "ikke_mott",
+    "navn": "Ikke møtt, per avsatte 30 min",
+    "pris_kr": 750,
+    "merknad": null
+  }
+]

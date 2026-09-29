@@ -1,0 +1,67 @@
+{
+  "navn": "Torget Tannklinikk",
+  "tidligere_navn": [
+    "Tannlegene Holm"
+  ],
+  "adresse": {
+    "gate": "Torggata 7",
+    "etasje": "2. etasje",
+    "beskrivelse": "ved torget",
+    "postnummer": "1767",
+    "sted": "Fjordvik"
+  },
+  "telefon": "12 34 56 78",
+  "nettside": "klinikkens nettside",
+  "apningstider": {
+    "mandag": {
+      "fra": "08:00",
+      "til": "16:00"
+    },
+    "tirsdag": {
+      "fra": "08:00",
+      "til": "16:00"
+    },
+    "onsdag": {
+      "fra": "08:00",
+      "til": "16:00"
+    },
+    "torsdag": {
+      "fra": "08:00",
+      "til": "16:00"
+    },
+    "fredag": {
+      "fra": "08:00",
+      "til": "16:00"
+    },
+    "lordag": null,
+    "sondag": null
+  },
+  "lunsj": {
+    "fra": "11:30",
+    "til": "12:00"
+  },
+  "parkering": {
+    "steder": [
+      "Havnegata",
+      "Kirkegata",
+      "Fjordvik torg"
+    ],
+    "merknad": "Betal parkeringsavgift"
+  },
+  "tar_imot_nye_pasienter": true,
+  "nodnumre": {
+    "akutt_livstruende": {
+      "nummer": "113",
+      "navn": "Medisinsk nødtelefon"
+    },
+    "legevakt": {
+      "nummer": "116 117",
+      "navn": "Legevakt"
+    }
+  },
+  "gebyr_ikke_mott": {
+    "pris_kr": 750,
+    "per_minutter": 30,
+    "beskrivelse": "Ikke møtt eller for sent avbestilt: 750 kr per avsatte 30 minutter"
+  }
+}

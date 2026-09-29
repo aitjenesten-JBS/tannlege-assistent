@@ -1,0 +1,135 @@
+[
+  {
+    "id": "undersokelse",
+    "navn": "Undersøkelse",
+    "varighet_min": 45,
+    "behandlertyper": [
+      "tannlege",
+      "tannpleier"
+    ],
+    "bookbar_online": true,
+    "pris_id": "undersokelse",
+    "merknad": null
+  },
+  {
+    "id": "fylling_1_flate",
+    "navn": "Fylling, 1 flate",
+    "varighet_min": 30,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": "fylling_1_flate",
+    "merknad": null
+  },
+  {
+    "id": "fylling_2_flater",
+    "navn": "Fylling, 2 flater",
+    "varighet_min": 45,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": "fylling_2_flater",
+    "merknad": null
+  },
+  {
+    "id": "fylling_3_flater",
+    "navn": "Fylling, 3 flater",
+    "varighet_min": 60,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": "fylling_3_flater",
+    "merknad": null
+  },
+  {
+    "id": "rotfylling",
+    "navn": "Rotfylling",
+    "varighet_min": 90,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": null,
+    "merknad": "Pris avhenger av antall kanaler (1 / 2 / 3–4)"
+  },
+  {
+    "id": "trekking",
+    "navn": "Ukomplisert trekking",
+    "varighet_min": 45,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": "trekking",
+    "merknad": null
+  },
+  {
+    "id": "akutt",
+    "navn": "Akutt-time",
+    "varighet_min": 30,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": null,
+    "merknad": "Pris avhenger av hva som må gjøres"
+  },
+  {
+    "id": "etterkontroll",
+    "navn": "Etterkontroll",
+    "varighet_min": 15,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": true,
+    "pris_id": "etterkontroll",
+    "merknad": null
+  },
+  {
+    "id": "kirurgisk_fjerning",
+    "navn": "Kirurgisk fjerning",
+    "varighet_min": null,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": false,
+    "pris_id": "kirurgisk_fjerning",
+    "merknad": "Bestilles etter undersøkelse"
+  },
+  {
+    "id": "krone_jeksel",
+    "navn": "Helkeramisk krone, jeksel",
+    "varighet_min": null,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": false,
+    "pris_id": "krone_jeksel",
+    "merknad": "Bestilles etter undersøkelse"
+  },
+  {
+    "id": "porselensfasade",
+    "navn": "Porselensfasade",
+    "varighet_min": null,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": false,
+    "pris_id": "porselensfasade",
+    "merknad": "Bestilles etter undersøkelse"
+  },
+  {
+    "id": "opg",
+    "navn": "OPG (panoramarøntgen)",
+    "varighet_min": null,
+    "behandlertyper": [
+      "tannlege"
+    ],
+    "bookbar_online": false,
+    "pris_id": "opg",
+    "merknad": "Tas ved behov i forbindelse med undersøkelse"
+  }
+]
