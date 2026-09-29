@@ -4,11 +4,11 @@ En digital assistent for en norsk tannklinikk. Pasienten kan stille spørsmål o
 
 > Porteføljeprosjekt og demo. Klinikken «Torget Tannklinikk» i Fjordvik er oppdiktet. Priser og behandlinger er realistiske, men ingen ekte pasientdata er brukt.
 
-<p>
-  <img src="docs/skjermbilder/02-priser.png" width="260" alt="Pris på fylling" />
-  <img src="docs/skjermbilder/03-kalender.png" width="260" alt="Kalender med ledige tider" />
-  <img src="docs/skjermbilder/05-bekreftelse.png" width="260" alt="Bekreftet reservasjon med bookingkode" />
+<p align="center">
+  <img src="docs/booking.gif" width="380" alt="Booking fra spørsmål til reservert time på 30 sekunder" />
 </p>
+
+<p align="center"><em>Fra «jeg vil bestille» til reservert time med bookingkode. Opptak av den ekte modellen.</em></p>
 
 **▶ Prøv demoen: [tannlege-assistent.vercel.app](https://tannlege-assistent.vercel.app)** · Video: _kommer_
 

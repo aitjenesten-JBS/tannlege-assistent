@@ -49,3 +49,6 @@ next-env.d.ts
 
 # evalkjøringer (resultatet kopieres til README)
 /eval/resultat.json
+
+# Lokal fil med admin-lenke (inneholder nøkkel)
+/ADMIN-LENKE.txt
