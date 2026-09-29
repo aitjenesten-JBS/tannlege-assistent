@@ -10,6 +10,7 @@ import {
   flyttTime,
   formaterTidspunkt,
   hentHenvendelser,
+  ledigeTiderPerDag,
   naaOslo,
   normaliserTelefon,
   overforTilKlinikken,
@@ -139,4 +140,49 @@ test("overføring til klinikken lagres", async () => {
   await overforTilKlinikken({ oppsummering: "Spør om faktura", kontaktinfo: "91234567" }, NAA);
   const liste = await hentHenvendelser();
   assert.equal(liste.at(-1)?.oppsummering, "Spør om faktura");
+});
+
+test("kalendervisning: halvtimes-rutenett, ingen helg, og tidene kan faktisk bookes", async () => {
+  const res = await ledigeTiderPerDag({ behandling: "fylling_1_flate", fra_dato: "2026-09-01", til_dato: "2026-10-31" }, NAA);
+  const datoer = Object.keys(res.dager);
+  assert.ok(datoer.length > 10);
+  assert.ok(datoer.every((d) => d >= "2026-09-29"), "fortid skal ikke vises");
+  assert.ok(!datoer.includes("2026-10-03") && !datoer.includes("2026-10-04"), "helg skal ikke vises");
+  assert.ok(datoer.at(-1)! <= "2026-11-09", "maks 42 dager");
+  const tider = Object.values(res.dager).flat();
+  assert.ok(tider.every((t) => /:(00|30)$/.test(t.tid)));
+  assert.ok(tider.every((t) => t.behandler_id !== "emma_dahl"));
+  // Stikkprøve: en vist tid kan bookes, og forsvinner deretter fra visningen
+  const valgt = res.dager["2026-10-07"][0];
+  const b = await bestillTime({ behandling: "fylling_1_flate", tidspunkt: valgt.tidspunkt, behandler: valgt.behandler_id, ...kontakt }, NAA);
+  const etter = await ledigeTiderPerDag({ behandling: "fylling_1_flate", fra_dato: "2026-10-07", til_dato: "2026-10-07", behandler: valgt.behandler_id }, NAA);
+  assert.ok(!(etter.dager["2026-10-07"] ?? []).some((t) => t.tidspunkt === valgt.tidspunkt));
+  await avbestillTime({ bookingkode: b.bookingkode, telefon: kontakt.telefon });
+});
+
+test("kommentar med helseopplysninger avvises, praktisk kommentar godtas", async () => {
+  const { inneholderHelseopplysninger } = await import("@/lib/helse");
+  assert.ok(inneholderHelseopplysninger("Har vondt i en jeksel"));
+  assert.ok(inneholderHelseopplysninger("Bruker blodfortynnende"));
+  assert.ok(inneholderHelseopplysninger("Jeg er gravid"));
+  assert.ok(!inneholderHelseopplysninger("Første gang hos dere, kommer med barnevogn"));
+  assert.ok(!inneholderHelseopplysninger("Trenger parkering nær inngangen"));
+  assert.ok(!inneholderHelseopplysninger("Ønsker å trekke en visdomstann, har tannlegeskrekk"));
+  assert.ok(!inneholderHelseopplysninger("Vil ha tannbleking"));
+  const [t] = (await finnLedigeTider({ behandling: "undersokelse" }, NAA)).ledige_tider;
+  const base = { behandling: "undersokelse", tidspunkt: t.tidspunkt, behandler: t.behandler_id, ...kontakt };
+  await assert.rejects(bestillTime({ ...base, kommentar: "har verk og feber" }, NAA), /AI-assistenten/);
+  const ok = await bestillTime({ ...base, kommentar: "Første gang hos dere" }, NAA);
+  assert.equal(ok.kommentar, "Første gang hos dere");
+  await avbestillTime({ bookingkode: ok.bookingkode, telefon: kontakt.telefon });
+});
+
+test("kalenderfil bruker riktig UTC-tid både sommer og vinter", async () => {
+  const { lagIcs, osloTilUtc } = await import("@/lib/ics");
+  assert.equal(osloTilUtc("2026-10-07T08:00").toISOString(), "2026-10-07T06:00:00.000Z"); // CEST
+  assert.equal(osloTilUtc("2026-11-10T08:00").toISOString(), "2026-11-10T07:00:00.000Z"); // CET
+  const ics = lagIcs({ bookingkode: "TTK-TEST1", behandling: "Undersøkelse", behandler: "Sara Haugen", tidspunkt: "2026-10-07T08:00", varighet_min: 45, adresse: "Torggata 7, 1234 Fjordvik" });
+  assert.match(ics, /DTSTART:20261007T060000Z/);
+  assert.match(ics, /DTEND:20261007T064500Z/);
+  assert.ok(ics.includes("LOCATION:Torggata 7\\, 1234 Fjordvik"), "komma skal escapes i ICS");
 });

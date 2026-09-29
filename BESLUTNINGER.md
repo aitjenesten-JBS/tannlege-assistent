@@ -69,3 +69,38 @@ Funn og rettelser:
 - **`npm run chat` startet ikke.** Prosjektet er CommonJS, så top-level await i skriptet feilet. Skriptet er gjort om til `.mts`.
 - **For få valg hos en bestemt behandler.** Søket ga én tid per dag. Pasienten spurte etter «torsdag hos Sara» og fikk ett eneste valg. Nå gis to tider per dag med minst én time mellom når pasienten har valgt behandler.
 - **Bekreftet at det virker:** en tid som ikke er tilbudt blir avvist, den gamle tiden blir ledig etter flytting, feil telefon og feil kode gir samme nøytrale svar, og akutt-tiden 08:30 dukker opp for akutt-søk.
+
+## 2026-09-29 – Widget, tidsvelger og kontrollspørsmål
+
+### Kalender i chatten i stedet for tider som tekst (brukerens ønske)
+Første utkast lot modellen liste opp 5 tider i teksten. Jeg overstyrte det og ville ha en kalender som på vanlige bookingsider, der man klikker seg gjennom dag, tid, bekreftelse og skjema. Modellen velger behandling og åpner kalenderen med verktøyet `vis_tidsvelger`. Kalenderen henter ledige tider rett fra timeboken (`/api/ledige`), uten å gå via modellen, så det er raskt og gratis. Skjemaet booker direkte (`/api/bestill`), og modellen får den bekreftede bookingen som system-melding og skriver bekreftelsen.
+
+### Ingen ekstra ja/nei-runde før kalenderen
+Modellen sier hva den setter opp («undersøkelse, 45 min, 1450 kr») og åpner kalenderen i samme svar. Kalenderen viser behandlingen øverst, så pasienten kan rette. Det sparer én runde med venting og ett API-kall.
+
+### Bestillinger går til sekretærens gjennomgang (brukerens presisering)
+Hovedformålet er å få bestillinger inn i et system som tannhelsesekretæren går gjennom, ikke å erstatte henne. Derfor:
+- Feltet «Hva gjelder timen?» (valgfritt, maks 200 tegn) er der pasienten beskriver det som ikke passer som en vanlig time, for eksempel tannbleking eller ønsket trekking.
+- Behandlinger som ikke kan bestilles på nett, bookes som undersøkelse med ønsket i feltet.
+- `/admin` viser «Bestillinger til gjennomgang», der kommentaren er uthevet, og i tillegg henvendelsene.
+
+### Undersøkelse først, med unntak (antakelse, bekreft med klinikken)
+Nye pasienter og «vanlig time» får undersøkelse. Fylling, rotfylling og trekking bookes direkte bare hvis tannlegen har anbefalt det etter en undersøkelse. Ellers blir det undersøkelse med ønsket i kommentarfeltet. Plager nå gir akutt-time, og røde flagg går foran alt.
+
+### Helseopplysninger
+- **Chat:** fast setning «Dette kan ikke AI-assistenten vurdere. Ta kontakt med klinikken …» (brukerens ønske). Røde flagg kommer før setningen. Ingen førstehjelpsråd, heller ikke velmente som «legg tannen i melk», fordi en demo-bot ikke skal gi medisinske råd.
+- **Kommentarfeltet:** ordlistesjekk både i nettleseren og på serveren. Symptomer, sykdommer og medisiner avvises med samme melding. Behandlingsønsker («trekke visdomstann», «tannlegeskrekk») er bevisst tillatt, fordi sekretæren trenger dem.
+
+### Bekreftelsesmail og kalenderfil
+Resend sender bare til `EPOST_DEMO_MOTTAKER` (eieren). Uten eget domene kan Resend ikke levere til andre, og et åpent skjema som sender e-post til vilkårlige adresser kan misbrukes. Alle andre besøkende ser en forhåndsvisning av den samme e-posten i chatten. Alle får «Legg til i kalender» (.ics), der tiden er regnet om fra Oslo-tid til UTC, med sommer- og vintertid testet.
+
+### Kontrollspørsmålene: data fra nettsiden
+Ved rollespill av de 30 kontrollspørsmålene besto 23 av 30. Alle de røde skyldtes at dataene manglet: tannbleking, fyllingstyper, rotfylling, implantater og kontaktskjema. Jeg hentet teksten fra klinikkens nettside til `data/tjenester.json`, med kildelenke per oppføring, og skjerpet helsereglene. Etterpå besto 30 av 30. Evalen ble selv testet mot bevisst dårlige svar (diagnose, «legg tannen i melk», oppdiktet blekepris, busslinje). Det avslørte at diagnosemønsteret ikke fanget «det er nok hull» og «kan være en infeksjon». Mønsteret ble skjerpet. Rollespillet er Claude Codes svar etter prompten, ikke Sonnet 5.5. `npm run eval` kjører den ekte modellen når API-nøkkelen er på plass.
+
+## 2026-09-29 – Kostnadsvern (10 USD på kontoen)
+Kontoen har bare 10 USD, og demoen må fortsatt virke når Nuto ser på den. Derfor:
+- **Faktisk forbruk registreres per kall** (`lib/kostnad.ts`) ut fra `usage` i svaret, med prisene for Sonnet 5.5 (input 2, cache-skriving 2,50, cache-lesing 0,20, output 10 USD per million tokens).
+- **Harde tak:** `DAGSBUDSJETT_USD` (1,00) og `TOTALBUDSJETT_USD` (6,00). Når et tak er nådd, svarer chatten at demoen har nådd kostnadstaket og henviser til telefon. Kalenderen og skjemaet virker fortsatt, fordi de ikke bruker modellen.
+- **Meldingstak:** i tillegg maks 150 meldinger per døgn totalt og 20 per IP per time (Upstash).
+- **Evalen** viser kostnad per kjøring og stopper ved `--maks-usd` (standard 1,50).
+- **Testing i trinn:** telle tokens (gratis), røyktest med 3 spørsmål, full eval, deretter bare de røde på nytt. Alt som kan testes uten modellen (kalender, verktøy, UI, regler) er testet uten API-kall først.

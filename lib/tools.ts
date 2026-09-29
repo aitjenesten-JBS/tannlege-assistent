@@ -9,7 +9,9 @@ import {
   finnLedigeTider,
   flyttTime,
   overforTilKlinikken,
+  sjekkBehandling,
 } from "@/lib/kalender";
+import { sendBekreftelse } from "@/lib/epost";
 
 const behandlingIder = bookbareBehandlinger().map((b) => b.id);
 const behandlerIder = ansatte.filter((a) => a.bookbar).map((a) => a.id);
@@ -51,6 +53,7 @@ export const tools: Anthropic.Beta.BetaTool[] = [
         navn: tekst("Pasientens fulle navn."),
         telefon,
         epost: tekst("Pasientens e-postadresse."),
+        kommentar: tekst("Valgfri praktisk kommentar til klinikken (maks 200 tegn). Aldri helseopplysninger."),
       },
       required: ["behandling", "tidspunkt", "behandler", "navn", "telefon", "epost"],
       additionalProperties: false,
@@ -96,6 +99,23 @@ export const tools: Anthropic.Beta.BetaTool[] = [
     },
   },
   {
+    name: "vis_tidsvelger",
+    description:
+      "Vis en kalender i chatten der pasienten selv velger dag og tid. Førstevalget når pasienten vil bestille eller flytte en time og behandlingen er kjent. Ved ny time fyller pasienten inn navn, telefon og e-post i et skjema i kalenderen.",
+    strict: true,
+    input_schema: {
+      type: "object",
+      properties: {
+        formaal: { type: "string", enum: ["ny_time", "flytte"], description: "ny_time for ny bestilling, flytte for å flytte en eksisterende time." },
+        behandling: { type: "string", enum: behandlingIder, description: "Behandlingstype. Ved flytting: samme behandling som timen som flyttes." },
+        behandler: { type: "string", enum: behandlerIder, description: "Kun hvis pasienten ønsker en bestemt behandler." },
+        fra_dato: tekst("Dato kalenderen skal åpne på, som ÅÅÅÅ-MM-DD. Utelat for tidligst mulig."),
+      },
+      required: ["formaal", "behandling"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "overfor_til_klinikken",
     description:
       "Send en henvendelse til klinikkens personale når du ikke kan hjelpe (f.eks. faktura, journal, klager, spørsmål som ikke står i informasjonen din). Be om kontaktinfo først.",
@@ -119,18 +139,46 @@ const str = (input: Input, felt: string) => {
 };
 const valgfri = (input: Input, felt: string) => (typeof input[felt] === "string" && input[felt] ? (input[felt] as string) : undefined);
 
-export async function kjorTool(navn: string, input: Input, naa = new Date()): Promise<{ innhold: string; feil: boolean }> {
+export interface Tidsvelger {
+  formaal: "ny_time" | "flytte";
+  behandling: string;
+  behandling_navn: string;
+  varighet_min: number;
+  behandler?: string;
+  fra_dato?: string;
+}
+
+export async function kjorTool(
+  navn: string,
+  input: Input,
+  naa = new Date(),
+): Promise<{ innhold: string; feil: boolean; tidsvelger?: Tidsvelger }> {
   try {
     let resultat: unknown;
     switch (navn) {
+      case "vis_tidsvelger": {
+        const formaal = input.formaal === "flytte" ? "flytte" : "ny_time";
+        const behandler = valgfri(input, "behandler");
+        const fraDato = valgfri(input, "fra_dato");
+        const tidsvelger: Tidsvelger = { formaal, ...sjekkBehandling(str(input, "behandling"), behandler), behandler, fra_dato: fraDato };
+        const neste =
+          formaal === "ny_time"
+            ? "Pasienten velger tid og fyller inn navn, telefon og e-post i skjemaet. Ikke be om kontaktinfo i chatten. Når bookingen er gjort, får du beskjed i en system-melding."
+            : "Når pasienten har valgt, kommer valget som en melding. Kall da flytt_time med bookingkoden og telefonnummeret du allerede har.";
+        return {
+          innhold: `Kalenderen vises nå under svaret ditt. Si i én setning at pasienten kan velge dag og tid i kalenderen. Ikke list opp tider selv. ${neste}`,
+          feil: false,
+          tidsvelger,
+        };
+      }
       case "finn_ledige_tider":
         resultat = await finnLedigeTider(
           { behandling: str(input, "behandling"), fra_dato: valgfri(input, "fra_dato"), behandler: valgfri(input, "behandler") },
           naa,
         );
         break;
-      case "bestill_time":
-        resultat = await bestillTime(
+      case "bestill_time": {
+        const booking = await bestillTime(
           {
             behandling: str(input, "behandling"),
             tidspunkt: str(input, "tidspunkt"),
@@ -138,10 +186,14 @@ export async function kjorTool(navn: string, input: Input, naa = new Date()): Pr
             navn: str(input, "navn"),
             telefon: str(input, "telefon"),
             epost: str(input, "epost"),
+            kommentar: valgfri(input, "kommentar"),
           },
           naa,
         );
+        const epost = await sendBekreftelse(booking, str(input, "epost"));
+        resultat = { ...booking, epost: epost === "sendt" ? "bekreftelse sendt på e-post" : "e-post ikke sendt (demo)" };
         break;
+      }
       case "finn_booking":
         resultat = await finnBooking({ bookingkode: str(input, "bookingkode"), telefon: str(input, "telefon") });
         break;

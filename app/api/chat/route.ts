@@ -1,53 +1,42 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+import klinikk from "@/data/klinikk.json";
+import { feil, lesJson, sjekkGrense, UUID } from "@/lib/api";
 import { svar } from "@/lib/assistent";
-import { harRedis } from "@/lib/lagring";
+import { erFrakoblet, frakobletSvar } from "@/lib/frakoblet";
+import { BudsjettOppbrukt } from "@/lib/kostnad";
 
 export const maxDuration = 60;
 
 const MAKS_TEGN = 1000;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Rate limit krever Upstash. Lokalt uten nøkler er den av.
-const grenser = harRedis()
-  ? {
-      perIp: new Ratelimit({ redis: Redis.fromEnv(), limiter: Ratelimit.slidingWindow(20, "1 h"), prefix: "rl:ip" }),
-      totalt: new Ratelimit({ redis: Redis.fromEnv(), limiter: Ratelimit.fixedWindow(500, "1 d"), prefix: "rl:totalt" }),
-    }
-  : null;
-
-const feil = (status: number, melding: string) => Response.json({ feil: melding }, { status });
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return feil(400, "Ugyldig forespørsel.");
-  }
-  const { samtaleId, melding } = (body ?? {}) as { samtaleId?: unknown; melding?: unknown };
+  const body = await lesJson(request);
+  if (!body) return feil(400, "Ugyldig forespørsel.");
+  const { samtaleId, melding } = body;
   if (typeof samtaleId !== "string" || !UUID.test(samtaleId)) return feil(400, "Ugyldig samtale-id.");
   if (typeof melding !== "string" || !melding.trim()) return feil(400, "Meldingen er tom.");
   if (melding.length > MAKS_TEGN) return feil(400, `Meldingen er for lang (maks ${MAKS_TEGN} tegn).`);
 
-  if (grenser) {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "ukjent";
-    const [perIp, totalt] = await Promise.all([grenser.perIp.limit(ip), grenser.totalt.limit("alle")]);
-    if (!perIp.success || !totalt.success) {
-      return feil(429, "Du har sendt mange meldinger. Prøv igjen senere, eller ring klinikken på 12 34 56 78.");
-    }
-  }
+  const begrenset = await sjekkGrense(request, "chat");
+  if (begrenset) return begrenset;
 
   try {
+    if (erFrakoblet()) {
+      const res = await frakobletSvar(samtaleId, melding.trim());
+      return Response.json({ svar: res.tekst, tidsvelger: res.tidsvelger ?? null, frakoblet: true });
+    }
     const resultat = await svar(samtaleId, melding.trim());
-    return Response.json({ svar: resultat.tekst });
+    console.info(`chat: ${resultat.toolKall.map((k) => k.navn).join(",") || "ingen tools"}, ${resultat.kostnadUsd.toFixed(4)} USD`);
+    return Response.json({ svar: resultat.tekst, tidsvelger: resultat.tidsvelger ?? null });
   } catch (e) {
+    if (e instanceof BudsjettOppbrukt) {
+      return feil(503, `Demoen har nådd kostnadstaket sitt for nå. Ring klinikken på ${klinikk.telefon}, eller prøv igjen i morgen.`);
+    }
     if (e instanceof Anthropic.RateLimitError) {
-      return feil(503, "Assistenten er travel akkurat nå. Prøv igjen om litt, eller ring klinikken på 12 34 56 78.");
+      return feil(503, `Assistenten er travel akkurat nå. Prøv igjen om litt, eller ring klinikken på ${klinikk.telefon}.`);
     }
     if (e instanceof Anthropic.APIError) console.error(`Claude API ${e.status}:`, e.message);
     else console.error(e);
-    return feil(500, "Beklager, noe gikk galt. Prøv igjen, eller ring klinikken på 12 34 56 78.");
+    return feil(500, `Beklager, noe gikk galt. Prøv igjen, eller ring klinikken på ${klinikk.telefon}.`);
   }
 }

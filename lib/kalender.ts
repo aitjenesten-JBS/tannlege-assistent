@@ -2,6 +2,8 @@ import klinikk from "@/data/klinikk.json";
 import behandlinger from "@/data/behandlinger.json";
 import ansatte from "@/data/ansatte.json";
 import { hentLager } from "@/lib/lagring";
+import { HELSE_SVAR, inneholderHelseopplysninger } from "@/lib/helse";
+import { MANEDER, UKEDAGER } from "@/lib/tidsformat";
 
 // Simulert timebok. Alle tider er veggklokketid i Oslo, som strenger
 // ("2026-09-30T09:15"), så serverens tidssone (UTC på Vercel) ikke spiller inn.
@@ -20,6 +22,7 @@ export interface Booking {
   navn: string;
   telefon: string;
   epost: string;
+  kommentar?: string;
   opprettet: string;
 }
 
@@ -38,9 +41,8 @@ const MIN_VARSEL_MIN = 60; // tidligste time i dag: minst en time frem
 const SOKEHORISONT_DAGER = 30;
 const MAKS_FORSLAG = 5;
 const BOOKING_TTL_SEK = 90 * 24 * 3600;
+const MAKS_KOMMENTAR = 200;
 
-const UKEDAGER = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
-const MANEDER = ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"];
 
 // ---------- tid ----------
 
@@ -115,6 +117,13 @@ function aktuelleBehandlere(b: Behandling, behandlerId?: string): Ansatt[] {
   return [valgt];
 }
 
+/** Validerer behandling og eventuell behandler, og gir det widgeten trenger for kalendervisningen. */
+export function sjekkBehandling(behandlingId: string, behandlerId?: string) {
+  const b = hentBehandling(behandlingId);
+  aktuelleBehandlere(b, behandlerId);
+  return { behandling: b.id, behandling_navn: b.navn, varighet_min: b.varighet_min! };
+}
+
 const behandlerNavn = (id: string) => ansatte.find((a) => a.id === id)?.navn ?? id;
 
 // ---------- simulert belegg ----------
@@ -150,7 +159,7 @@ export function simulertBelegg(behandlerId: string, dato: string): Opptatt[] {
   const opptatt: Opptatt[] = [];
   let t = APNER;
   while (t < STENGER) {
-    if (tilfeldig() < 0.45) {
+    if (tilfeldig() < 0.3) {
       const lengde = [30, 45, 60][Math.floor(tilfeldig() * 3)];
       const blokk = { behandler_id: behandlerId, fra: t, til: t + lengde };
       if (blokk.til <= STENGER && !overlapper(blokk, LUNSJ) && !reservert.some((r) => overlapper(r, blokk))) {
@@ -173,12 +182,21 @@ async function bookingerForDag(dato: string): Promise<Opptatt[]> {
   return (await hentLager().hent<Opptatt[]>(dagNokkel(dato))) ?? [];
 }
 
-async function erLedig(behandlingId: string, behandlerId: string, dato: string, fra: number, varighet: number, ignorerKode?: string) {
+/** Alt som er opptatt for én behandler en dag. Dagens bookinger hentes av kalleren, én gang per dag. */
+function opptattFor(behandlingId: string, behandlerId: string, dato: string, dagensBookinger: Opptatt[], ignorerKode?: string): Opptatt[] {
+  const bookinger = dagensBookinger.filter((b) => b.behandler_id === behandlerId && b.kode !== ignorerKode);
+  const akutt = behandlingId === "akutt" ? [] : akuttTider(dato).filter((a) => a.behandler_id === behandlerId);
+  return [...simulertBelegg(behandlerId, dato), ...bookinger, ...akutt];
+}
+
+function erLedig(dato: string, fra: number, varighet: number, opptatt: Opptatt[]) {
   const intervall = { fra, til: fra + varighet };
   if (!erArbeidsdag(dato) || fra < APNER || intervall.til > STENGER || overlapper(intervall, LUNSJ)) return false;
-  const bookinger = (await bookingerForDag(dato)).filter((b) => b.behandler_id === behandlerId && b.kode !== ignorerKode);
-  const akutt = behandlingId === "akutt" ? [] : akuttTider(dato).filter((a) => a.behandler_id === behandlerId);
-  return ![...simulertBelegg(behandlerId, dato), ...bookinger, ...akutt].some((o) => overlapper(o, intervall));
+  return !opptatt.some((o) => overlapper(o, intervall));
+}
+
+async function erLedigNa(behandlingId: string, behandlerId: string, dato: string, fra: number, varighet: number, ignorerKode?: string) {
+  return erLedig(dato, fra, varighet, opptattFor(behandlingId, behandlerId, dato, await bookingerForDag(dato), ignorerKode));
 }
 
 function sjekkIkkeForSent(dato: string, min: number, naa: Date) {
@@ -216,12 +234,14 @@ export async function finnLedigeTider(
     // Maks to forslag per dag, så forslagene spres utover. Med flere behandlere: første ledige
     // tid hos hver. Med én behandler: to tider med minst en time mellom.
     const perBehandler = behandlere.length === 1 ? 2 : 1;
+    const dagensBookinger = await bookingerForDag(dato);
     for (const behandler of behandlere) {
+      const opptatt = opptattFor(b.id, behandler.id, dato, dagensBookinger);
       let sist = -Infinity;
       let antall = 0;
       for (let fra = Math.ceil(tidligst / STEG) * STEG; fra + b.varighet_min! <= STENGER && antall < perBehandler; fra += STEG) {
         if (fra - sist < 60) continue;
-        if (await erLedig(b.id, behandler.id, dato, fra, b.varighet_min!)) {
+        if (erLedig(dato, fra, b.varighet_min!, opptatt)) {
           const tidspunkt = `${dato}T${klokke(fra)}`;
           dagensForslag.push({ tidspunkt, lesbar: formaterTidspunkt(tidspunkt), behandler_id: behandler.id, behandler_navn: behandler.navn, varighet_min: b.varighet_min! });
           sist = fra;
@@ -233,6 +253,47 @@ export async function finnLedigeTider(
     funnet.push(...dagensForslag.slice(0, 2));
   }
   return { behandling: b.navn, varighet_min: b.varighet_min!, ledige_tider: funnet.slice(0, MAKS_FORSLAG) };
+}
+
+export interface Dagtid {
+  tid: string;
+  tidspunkt: string;
+  behandler_id: string;
+  behandler_navn: string;
+}
+
+const VELGER_STEG = 30;
+const MAKS_VELGER_DAGER = 42;
+
+/**
+ * Alle ledige tider per dag i et datointervall, for kalendervisningen i widgeten.
+ * Halvtimes-rutenett, og én behandler per klokkeslett (første ledige i ansattlisten).
+ */
+export async function ledigeTiderPerDag(
+  input: { behandling: string; fra_dato: string; til_dato: string; behandler?: string },
+  naa = new Date(),
+): Promise<{ behandling: string; varighet_min: number; dager: Record<string, Dagtid[]> }> {
+  const b = hentBehandling(input.behandling);
+  const behandlere = aktuelleBehandlere(b, input.behandler || undefined);
+  if (!gyldigDato(input.fra_dato) || !gyldigDato(input.til_dato) || input.til_dato < input.fra_dato) {
+    throw new Brukerfeil("Ugyldig datointervall.");
+  }
+  const idag = naaOslo(naa);
+  const dager: Record<string, Dagtid[]> = {};
+  let dato = input.fra_dato > idag.dato ? input.fra_dato : idag.dato;
+  for (let i = 0; dato <= input.til_dato && i < MAKS_VELGER_DAGER; i++, dato = leggTilDager(dato, 1)) {
+    if (!erArbeidsdag(dato)) continue;
+    const tidligst = dato === idag.dato ? idag.minutter + MIN_VARSEL_MIN : APNER;
+    const dagensBookinger = await bookingerForDag(dato);
+    const opptatt = behandlere.map((a) => ({ a, opptatt: opptattFor(b.id, a.id, dato, dagensBookinger) }));
+    const tider: Dagtid[] = [];
+    for (let fra = Math.ceil(tidligst / VELGER_STEG) * VELGER_STEG; fra + b.varighet_min! <= STENGER; fra += VELGER_STEG) {
+      const ledig = opptatt.find((o) => erLedig(dato, fra, b.varighet_min!, o.opptatt));
+      if (ledig) tider.push({ tid: klokke(fra), tidspunkt: `${dato}T${klokke(fra)}`, behandler_id: ledig.a.id, behandler_navn: ledig.a.navn });
+    }
+    if (tider.length) dager[dato] = tider;
+  }
+  return { behandling: b.navn, varighet_min: b.varighet_min!, dager };
 }
 
 export function normaliserTelefon(telefon: string): string {
@@ -258,12 +319,14 @@ function nyKode(): string {
 function bekreftelse(booking: Booking) {
   return {
     bookingkode: booking.kode,
-    behandling: behandlinger.find((b) => b.id === booking.behandling_id)?.navn,
+    behandling_id: booking.behandling_id,
+    behandling: behandlinger.find((b) => b.id === booking.behandling_id)?.navn ?? booking.behandling_id,
     behandler: behandlerNavn(booking.behandler_id),
     tidspunkt: booking.tidspunkt,
     lesbar: formaterTidspunkt(booking.tidspunkt),
     varighet_min: booking.varighet_min,
     navn: booking.navn,
+    kommentar: booking.kommentar ?? null,
     adresse: `${klinikk.adresse.gate}, ${klinikk.adresse.etasje}, ${klinikk.adresse.postnummer} ${klinikk.adresse.sted}`,
     gebyr_ikke_mott: klinikk.gebyr_ikke_mott.beskrivelse,
   };
@@ -284,7 +347,7 @@ async function frigi(booking: Booking) {
 }
 
 export async function bestillTime(
-  input: { behandling: string; tidspunkt: string; behandler: string; navn: string; telefon: string; epost: string },
+  input: { behandling: string; tidspunkt: string; behandler: string; navn: string; telefon: string; epost: string; kommentar?: string },
   naa = new Date(),
 ) {
   const b = hentBehandling(input.behandling);
@@ -293,8 +356,9 @@ export async function bestillTime(
   sjekkIkkeForSent(dato, min, naa);
   const telefon = normaliserTelefon(input.telefon);
   sjekkKontakt(input.navn, input.epost);
-  if (!(await erLedig(b.id, behandler.id, dato, min, b.varighet_min!))) {
-    throw new Brukerfeil("Tiden er ikke ledig lenger. Finn nye ledige tider og tilby dem.");
+  if (inneholderHelseopplysninger(input.kommentar)) throw new Brukerfeil(`Kommentaren ser ut til å inneholde helseopplysninger. ${HELSE_SVAR}`);
+  if (!(await erLedigNa(b.id, behandler.id, dato, min, b.varighet_min!))) {
+    throw new Brukerfeil("Tiden er ikke ledig lenger. Velg en annen tid.");
   }
 
   let kode = nyKode();
@@ -308,10 +372,41 @@ export async function bestillTime(
     navn: input.navn.trim(),
     telefon,
     epost: input.epost.trim(),
+    kommentar: input.kommentar?.trim().slice(0, MAKS_KOMMENTAR) || undefined,
     opprettet: naa.toISOString(),
   };
   await reserver(booking);
+  await hentLager().leggTilListe("bookinglogg", booking.kode);
   return { status: "bekreftet", ...bekreftelse(booking) };
+}
+
+export interface BookingOversikt extends Booking {
+  behandling_navn: string;
+  behandler_navn: string;
+  lesbar: string;
+  status: "aktiv" | "avbestilt";
+}
+
+/** Alle bestillinger gjort via assistenten, nyeste først, for sekretærens gjennomgang i /admin. */
+export async function hentBookingerTilGjennomgang(): Promise<BookingOversikt[]> {
+  const koder = [...new Set(await hentLager().hentListe<string>("bookinglogg"))].reverse();
+  const bookinger = await Promise.all(koder.map((k) => hentLager().hent<Booking>(bookingNokkel(k))));
+  return koder.map((kode, i) => {
+    const b = bookinger[i];
+    if (!b) {
+      return {
+        kode, behandling_id: "", behandler_id: "", tidspunkt: "", varighet_min: 0, navn: "", telefon: "", epost: "", opprettet: "",
+        behandling_navn: "", behandler_navn: "", lesbar: "", status: "avbestilt" as const,
+      };
+    }
+    return {
+      ...b,
+      behandling_navn: behandlinger.find((x) => x.id === b.behandling_id)?.navn ?? b.behandling_id,
+      behandler_navn: behandlerNavn(b.behandler_id),
+      lesbar: formaterTidspunkt(b.tidspunkt),
+      status: "aktiv" as const,
+    };
+  });
 }
 
 async function hentVerifisert(bookingkode: string, telefon: string): Promise<Booking> {
@@ -344,8 +439,8 @@ export async function flyttTime(
   const [behandler] = aktuelleBehandlere(b, input.behandler || booking.behandler_id);
   const { dato, min } = tolkTidspunkt(input.nytt_tidspunkt);
   sjekkIkkeForSent(dato, min, naa);
-  if (!(await erLedig(b.id, behandler.id, dato, min, booking.varighet_min, booking.kode))) {
-    throw new Brukerfeil(`${behandler.navn} er ikke ledig da. Finn nye ledige tider og tilby dem.`);
+  if (!(await erLedigNa(b.id, behandler.id, dato, min, booking.varighet_min, booking.kode))) {
+    throw new Brukerfeil(`${behandler.navn} er ikke ledig da. Velg en annen tid.`);
   }
   const gammel = formaterTidspunkt(booking.tidspunkt);
   await frigi(booking);

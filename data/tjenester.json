@@ -1,0 +1,79 @@
+[
+  {
+    "id": "undersokelse",
+    "navn": "Undersøkelse og tannrens",
+    "tilbys": true,
+    "info": "Undersøkelsen inkluderer 2 røntgenbilder, puss og lett rens. Bakterier og misfarging fjernes, og tennene gjennomgås grundig for eventuelle behandlingsbehov. Hvor ofte man bør komme er individuelt, og klinikken kartlegger det for hver pasient.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "rontgen",
+    "navn": "Røntgen",
+    "tilbys": true,
+    "info": "Røntgenbilder er ofte en del av undersøkelsen (2 røntgenbilder er inkludert i undersøkelsen). Klinikken tar også OPG (panoramarøntgen av hele kjeven). Andre røntgentyper er ikke oppgitt.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "fyllinger",
+    "navn": "Fyllinger",
+    "tilbys": true,
+    "info": "Klinikken bruker tannfargede plast- eller komposittfyllinger, som legges ferdig samme dag. Fyllinger kan også lages som innlegg av porselen eller gull. Amalgam har ikke vært brukt i Norge siden 2008.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "rotfylling",
+    "navn": "Rotfylling",
+    "tilbys": true,
+    "info": "En rotfylling gjøres for eksempel når tannens nerve er skadet eller død. Tannen bedøves godt før behandlingen. Milde, forbigående smerter et par dager etterpå er normalt, og det er viktig å få rotfyllingen kontrollert hos tannlegen, særlig i begynnelsen. Antall besøk er ikke oppgitt.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "trekking",
+    "navn": "Trekking av tenner",
+    "tilbys": true,
+    "info": "Klinikken trekker tenner, både ukomplisert trekking og kirurgisk fjerning av tenner eller røtter som ligger dypt. Vanlige grunner er karies, visdomstenner, tannkjøttsykdom eller bittproblemer. Etter trekking gir klinikken råd om etterbehandling.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "kroner",
+    "navn": "Kroner og broer",
+    "tilbys": true,
+    "info": "En krone dekker hele tannen og brukes når mye av tannen mangler, etter rotfylling eller på implantat. Klinikken lager blant annet helkeramiske kroner og metall-keramiske kroner. Flere kroner kan settes sammen til en bro.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "implantater",
+    "navn": "Implantater",
+    "tilbys": true,
+    "info": "Et implantat er en titanskrue som erstatter en tapt tannrot, med en implantatkrone eller implantatbro på toppen. Klinikken henviser til oral kirurg, som undersøker og setter inn implantatet. Pris er ikke oppgitt.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "fasetter",
+    "navn": "Porselensfasetter",
+    "tilbys": true,
+    "info": "Fasetter kan være en løsning når en tann er skadet, har en uheldig fasong eller er mindre pen, først og fremst på fortennene. Porselen er ett av materialene, og teknikken krever lite tap av tannsubstans.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "tannbleking",
+    "navn": "Tannbleking",
+    "tilbys": true,
+    "info": "Klinikken tilbyr kun hjemmebleking. Tannlegen tar avtrykk og lager en tilpasset blekeskinne, og du får instruksjon i å bruke blekegel i skinnen hjemme. Behandlingen tar oftest 7–10 dager eller netter. Noen bør vente med bleking, og det vurderer tannlegen. Pris er ikke oppgitt i prislisten.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "tannkjott",
+    "navn": "Tannkjøttsykdommer",
+    "tilbys": true,
+    "info": "Klinikken behandler tannkjøttsykdommer, både betennelse i tannkjøttet og betennelse i området rundt tannen.",
+    "kilde": "klinikkens nettside"
+  },
+  {
+    "id": "tannlegeskrekk",
+    "navn": "Tannlegeskrekk",
+    "tilbys": true,
+    "info": "Klinikken tar imot pasienter med tannlegeskrekk. Hvordan det tilrettelegges er ikke oppgitt, så pasienten kan skrive det i kommentarfeltet eller ringe klinikken.",
+    "kilde": "klinikkens nettside"
+  }
+]

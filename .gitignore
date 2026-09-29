@@ -42,3 +42,10 @@ next-env.d.ts
 
 # env-mal skal med i repoet
 !.env.example
+
+# Playwright-testfiler
+/.playwright-mcp/
+/.claude/
+
+# evalkjøringer (resultatet kopieres til README)
+/eval/resultat.json

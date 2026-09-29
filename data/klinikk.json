@@ -10,8 +10,12 @@
     "postnummer": "1767",
     "sted": "Fjordvik"
   },
+  "beliggenhet": "Midt i sentrum ved torget i Fjordvik, i moderne lokaler i 2. etasje i Torggata 7.",
   "telefon": "12 34 56 78",
   "nettside": "klinikkens nettside",
+  "kontaktskjema": "Kontaktskjema på nettsiden (klinikkens nettside/kontakt) med navn, e-post, telefon og melding",
+  "epost": null,
+  "kollektivtransport": null,
   "apningstider": {
     "mandag": {
       "fra": "08:00",
