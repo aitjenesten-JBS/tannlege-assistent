@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { Tidsvelger as TidsvelgerOppsett } from "@/lib/tools";
 import Bekreftelseskort from "@/components/Bekreftelseskort";
+import { lagreTilgangFraUrl, tilgangHeader } from "@/lib/tilgang-klient";
 import Tidsvelger, { type Booking, type EpostStatus } from "@/components/Tidsvelger";
 
 interface Melding {
@@ -62,6 +63,9 @@ export default function Widget() {
   const feltRef = useRef<HTMLTextAreaElement>(null);
   const knappRef = useRef<HTMLButtonElement>(null);
 
+  // Lenken fra søknaden har ?tilgang=… som gir AI-chatten. Huskes og fjernes fra adressen.
+  useEffect(() => lagreTilgangFraUrl(), []);
+
   useEffect(() => {
     if (!samtaleId) return;
     try {
@@ -103,7 +107,7 @@ export default function Widget() {
       try {
         const r = await fetch("/api/chat", {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", ...tilgangHeader() },
           body: JSON.stringify({ samtaleId, melding }),
         });
         const j = await r.json().catch(() => ({}));
@@ -309,7 +313,7 @@ function Boble({ melding }: { melding: Melding }) {
     <div className="anim-inn w-fit max-w-[90%] rounded-2xl rounded-bl-md border border-strek bg-kort px-3.5 py-2.5 text-[15px] leading-relaxed text-blekk">
       <Tekst tekst={melding.tekst} />
       {melding.frakoblet && (
-        <p className="mt-2 border-t border-dashed border-strek pt-1.5 text-[11px] text-daempet">Skriptet svar – AI er av (frakoblet demo)</p>
+        <p className="mt-2 border-t border-dashed border-strek pt-1.5 text-[11px] text-daempet">Skriptet svar – AI-chatten krever lenken med tilgangskode</p>
       )}
     </div>
   );

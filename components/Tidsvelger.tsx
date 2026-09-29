@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dagtid } from "@/lib/kalender";
 import type { Tidsvelger as Oppsett } from "@/lib/tools";
 import { HELSE_SVAR, inneholderHelseopplysninger } from "@/lib/helse";
+import { tilgangHeader } from "@/lib/tilgang-klient";
 import { lesbarDato, lesbarTidspunkt, MANEDER } from "@/lib/tidsformat";
 
 export interface Booking {
@@ -129,7 +130,7 @@ export default function Tidsvelger({ oppsett, samtaleId, onBooket, onFlyttValg }
     try {
       const r = await fetch("/api/bestill", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...tilgangHeader() },
         body: JSON.stringify({
           samtaleId,
           behandling: oppsett.behandling,

@@ -4,6 +4,7 @@ import { feil, lesJson, sjekkGrense, UUID } from "@/lib/api";
 import { svar } from "@/lib/assistent";
 import { erFrakoblet, frakobletSvar } from "@/lib/frakoblet";
 import { BudsjettOppbrukt } from "@/lib/kostnad";
+import { harAiTilgang } from "@/lib/tilgang";
 
 export const maxDuration = 60;
 
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
   if (begrenset) return begrenset;
 
   try {
-    if (erFrakoblet()) {
+    // Uten tilgangskode (eller i frakoblet modus): skriptet demo, bruker ikke API-kreditter.
+    if (erFrakoblet() || !harAiTilgang(request)) {
       const res = await frakobletSvar(samtaleId, melding.trim());
       return Response.json({ svar: res.tekst, tidsvelger: res.tidsvelger ?? null, frakoblet: true });
     }

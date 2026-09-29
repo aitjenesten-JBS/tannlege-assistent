@@ -3,6 +3,7 @@ import { feil, lesJson, sjekkGrense, UUID } from "@/lib/api";
 import { svar } from "@/lib/assistent";
 import { sendBekreftelse } from "@/lib/epost";
 import { erFrakoblet } from "@/lib/frakoblet";
+import { harAiTilgang } from "@/lib/tilgang";
 import { bestillTime, Brukerfeil } from "@/lib/kalender";
 
 export const maxDuration = 60;
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   // Modellen skriver bekreftelsen. Feiler det (f.eks. uten API-nøkkel), er bookingen likevel
   // gjort, og widgeten viser en bekreftelse bygget fra bookingdataene.
   let bekreftelse: string | null = null;
-  if (!erFrakoblet()) try {
+  if (!erFrakoblet() && harAiTilgang(request)) try {
     const res = await svar(
       samtaleId,
       `Jeg har valgt ${booking.lesbar} hos ${booking.behandler} og sendt inn skjemaet.`,

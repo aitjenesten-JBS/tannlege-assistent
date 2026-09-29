@@ -16,7 +16,7 @@ En digital assistent for en norsk tannklinikk. Pasienten kan stille spørsmål o
 
 ## Slik tester du den
 
-1. Åpne **[tannlege-assistent.vercel.app](https://tannlege-assistent.vercel.app)** og trykk **«Bestill eller spør»** nede til høyre. Siden fungerer også på mobil.
+1. Åpne **lenken med tilgangskode fra søknaden** og trykk **«Bestill eller spør»** nede til høyre. Siden fungerer også på mobil. Uten koden virker kalender, booking og innboks som vanlig, men chatten svarer med skriptede svar i stedet for AI. Slik brukes ikke API-kreditter av tilfeldige besøkende.
 2. Prøv for eksempel:
    - **Bestilling:** «Jeg vil bestille en vanlig undersøkelse». Velg dag og tid i kalenderen, og fyll ut skjemaet. Du får en bookingkode, en kalenderfil (.ics) og en forhåndsvisning av e-posten.
    - **Flytte eller avbestille:** «Jeg vil flytte timen min», og oppgi bookingkoden og telefonnummeret du brukte.

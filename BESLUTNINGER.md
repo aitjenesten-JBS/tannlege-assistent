@@ -131,3 +131,6 @@ Målet var å vise at bestillinger faktisk når klinikken, ikke bare ligger i en
 - **Integrasjonen skal aldri stoppe en booking.** Timeout er 4 sekunder, feil logges, og pasienten merker ingenting. Alle sendinger (status, HTTP-kode, mottaker og hele pakken) logges og vises i admin under «Sendt til klinikksystemet».
 - **Personvern.** Pakken inneholder navn, telefon og e-post. Det er dokumentert i `.env.example` at bare testdata skal sendes til tredjeparts mottakere.
 - **Testet:** FHIR-struktur og UTC-tid, webhook mot en lokal HTTP-server (opprettet, flyttet og bekreftet i riktig rekkefølge og med riktig content-type), at en webhook som feiler ikke stopper bookingen, og at avvisning frigir tiden. 19 enhetstester totalt.
+
+## 2026-09-29 – Tilgangskode for AI-chatten
+Den offentlige demoen bruker mine API-kreditter. Å kreve innlogging med e-post ville gitt for mye friksjon for den som leser søknaden. Derfor en tilgangskode i lenken (`?tilgang=…`, `DEMO_TILGANG` i Vercel). Med koden får man den ekte modellen. Uten koden får man den skriptede demoen, som er gratis, mens kalender, booking og innboks virker likt. Koden lagres i nettleseren og fjernes fra adresselinjen, og den sammenlignes i konstant tid. Kostnadstakene gjelder fortsatt i tillegg.
