@@ -46,9 +46,9 @@ export async function POST(request: Request) {
       samtaleId,
       `Jeg har valgt ${booking.lesbar} hos ${booking.behandler} og sendt inn skjemaet.`,
       new Date(),
-      `Pasienten har bestilt time via skjemaet i kalenderen, og timeboken har bekreftet bookingen: ${JSON.stringify(booking)}. ` +
+      `Pasienten har bestilt time via skjemaet i kalenderen, tiden er reservert i timeboken, og bestillingen er sendt til klinikken for gjennomgang: ${JSON.stringify(booking)}. ` +
         (epost === "sendt"
-          ? "Bekreftelse er sendt på e-post. "
+          ? "Kvittering er sendt på e-post. "
           : "E-post ble ikke sendt (demo). Widgeten viser en forhåndsvisning av e-posten og en knapp for å legge timen i kalenderen. ") +
         "Bekreft kort med dag, klokkeslett, behandler og bookingkode, si at koden og telefonnummeret trengs for å endre timen, og nevn gebyret ved uteblivelse. Ikke kall bestill_time.",
     );

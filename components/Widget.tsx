@@ -126,7 +126,7 @@ export default function Widget() {
       // Uten svar fra modellen (f.eks. utilgjengelig) viser vi bekreftelsen fra timeboken selv.
       tekst:
         svar ??
-        `Timen er bestilt: ${booking.behandling.toLowerCase()} ${booking.lesbar} hos ${booking.behandler}, ${booking.adresse}. Klinikken går gjennom bestillingen.\n\nDu trenger bookingkoden og telefonnummeret for å endre timen. ${booking.gebyr_ikke_mott}.`,
+        `Tiden er reservert: ${booking.behandling.toLowerCase()} ${booking.lesbar} hos ${booking.behandler}, ${booking.adresse}. Bestillingen er sendt til klinikken, som går gjennom den og bekrefter på e-post.\n\nDu trenger bookingkoden og telefonnummeret for å endre timen. ${booking.gebyr_ikke_mott}.`,
       booking: { data: booking, epost },
     });
   }

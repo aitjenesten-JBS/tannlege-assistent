@@ -77,7 +77,7 @@ test("vanlige behandlinger får ikke akutt-tidene, akutt gjør det", async () =>
     /ikke ledig/,
   );
   const ok = await bestillTime({ behandling: "akutt", tidspunkt, behandler: morgen.behandler_id, ...kontakt }, NAA);
-  assert.equal(ok.status, "bekreftet");
+  assert.equal(ok.status, "reservert");
   await avbestillTime({ bookingkode: ok.bookingkode, telefon: kontakt.telefon });
 });
 

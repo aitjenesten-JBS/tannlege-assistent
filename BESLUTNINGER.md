@@ -121,3 +121,13 @@ Oppdragsgiver leverte 80 testspørsmål med akseptkriterier og ba om fire nivåe
 **Kostnad.** Den første kjøringen stoppet på kostnadsgrensen etter 31 tester, 1,63 USD. Årsaken var at prompt-cachen ikke traff: automatisk caching setter bruddpunktet på siste melding, som er ulik i hver samtale. Med et eksplisitt bruddpunkt på systemprompten falt kostnaden fra omtrent 0,05 til 0,003 USD per bot-kall. En full kjøring med dommer koster nå rundt 0,75 USD.
 
 **Sluttresultat: 85 av 85 PASS** (`eval/resultat.md`, alle svar i `eval/resultat-svar.json`). #81 ble kjørt på nytt etter rettingen av mønsteret. Samlet API-forbruk under utviklingen er omtrent 3,40 USD av 10.
+
+## 2026-09-29 – Bestillingene inn i klinikkens system
+Målet var å vise at bestillinger faktisk når klinikken, ikke bare ligger i en demo-database.
+
+- **Reservert, deretter bekreftet.** En bestilling fra chatten reserverer tiden og får status *Ny*. Sekretæren bekrefter eller avviser i `/admin`. Pasienten får først «Bestilling mottatt» på e-post, og deretter «Timen er bekreftet» eller «Om bestillingen din». Ved avvisning frigis tiden, og pasienten kan ikke lenger endre bookingen selv, fordi klinikken tar kontakt. Flytter pasienten timen, går den tilbake til *Ny*.
+- **FHIR R4 Appointment som format.** Hver hendelse (opprettet, flyttet, avbestilt, bekreftet, avvist) sendes som en FHIR Appointment til `BOOKING_WEBHOOK_URL`. Statusene er `pending`, `booked` og `cancelled`, og pasienten ligger som en «contained» Patient. FHIR er standarden norske journal- og EPJ-systemer bruker eller beveger seg mot, så formatet viser at dette er tenkt som en integrasjon og ikke en hjemmesnekret eksport.
+- **Webhook i stedet for direkte integrasjon.** Norske klinikksystemer som Opus Dental har ikke åpne API-er for timebøker. En ekte kobling krever avtale med leverandøren. Webhooken viser *hvor* den koblingen sitter. I demo kan den peke til webhook.site, og uten mottaker logges pakken likevel.
+- **Integrasjonen skal aldri stoppe en booking.** Timeout er 4 sekunder, feil logges, og pasienten merker ingenting. Alle sendinger (status, HTTP-kode, mottaker og hele pakken) logges og vises i admin under «Sendt til klinikksystemet».
+- **Personvern.** Pakken inneholder navn, telefon og e-post. Det er dokumentert i `.env.example` at bare testdata skal sendes til tredjeparts mottakere.
+- **Testet:** FHIR-struktur og UTC-tid, webhook mot en lokal HTTP-server (opprettet, flyttet og bekreftet i riktig rekkefølge og med riktig content-type), at en webhook som feiler ikke stopper bookingen, og at avvisning frigir tiden. 19 enhetstester totalt.

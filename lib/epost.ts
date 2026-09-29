@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { epostEmne, epostHtml, epostTekst, type EpostTime } from "@/lib/epostmal";
+import { epostEmne, epostHtml, epostTekst, type EpostTime, type EpostType } from "@/lib/epostmal";
 import { lagIcs, type IcsTime } from "@/lib/ics";
 
 // Sender bekreftelsesmail via Resend. I demoen sendes det bare til adressen i EPOST_DEMO_MOTTAKER:
@@ -8,7 +8,7 @@ import { lagIcs, type IcsTime } from "@/lib/ics";
 
 export type EpostStatus = "sendt" | "forhandsvisning" | "feilet";
 
-export async function sendBekreftelse(time: EpostTime & IcsTime, til: string): Promise<EpostStatus> {
+export async function sendBekreftelse(time: EpostTime & IcsTime, til: string, type: EpostType = "mottatt"): Promise<EpostStatus> {
   const nokkel = process.env.RESEND_API_KEY;
   const tillatt = process.env.EPOST_DEMO_MOTTAKER?.trim().toLowerCase();
   if (!nokkel || !tillatt || til.trim().toLowerCase() !== tillatt) return "forhandsvisning";
@@ -17,10 +17,11 @@ export async function sendBekreftelse(time: EpostTime & IcsTime, til: string): P
     const { error } = await new Resend(nokkel).emails.send({
       from: process.env.EPOST_AVSENDER || "Torget demo <onboarding@resend.dev>",
       to: til.trim(),
-      subject: epostEmne(time),
-      html: epostHtml(time),
-      text: epostTekst(time),
-      attachments: [{ filename: "tannlegetime.ics", content: Buffer.from(lagIcs(time)), contentType: "text/calendar" }],
+      subject: epostEmne(time, type),
+      html: epostHtml(time, type),
+      text: epostTekst(time, type),
+      // Kalenderfil bare når timen står (ikke ved avvist).
+      attachments: type === "avvist" ? [] : [{ filename: "tannlegetime.ics", content: Buffer.from(lagIcs(time)), contentType: "text/calendar" }],
     });
     if (error) {
       console.error("Resend:", error.message);

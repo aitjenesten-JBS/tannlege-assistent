@@ -1,6 +1,7 @@
 import klinikk from "@/data/klinikk.json";
 import behandlinger from "@/data/behandlinger.json";
 import ansatte from "@/data/ansatte.json";
+import { type Gjennomgang, varsleKlinikksystem } from "@/lib/klinikksystem";
 import { hentLager } from "@/lib/lagring";
 import { HELSE_SVAR, inneholderHelseopplysninger } from "@/lib/helse";
 import { MANEDER, UKEDAGER } from "@/lib/tidsformat";
@@ -24,6 +25,8 @@ export interface Booking {
   epost: string;
   kommentar?: string;
   opprettet: string;
+  gjennomgang?: Gjennomgang; // mangler på eldre bookinger = "ny"
+  behandlet?: string;
 }
 
 interface Opptatt {
@@ -316,7 +319,7 @@ function nyKode(): string {
   return kode;
 }
 
-function bekreftelse(booking: Booking) {
+export function bekreftelse(booking: Booking) {
   return {
     bookingkode: booking.kode,
     behandling_id: booking.behandling_id,
@@ -374,10 +377,12 @@ export async function bestillTime(
     epost: input.epost.trim(),
     kommentar: input.kommentar?.trim().slice(0, MAKS_KOMMENTAR) || undefined,
     opprettet: naa.toISOString(),
+    gjennomgang: "ny",
   };
   await reserver(booking);
   await hentLager().leggTilListe("bookinglogg", booking.kode);
-  return { status: "bekreftet", ...bekreftelse(booking) };
+  await varsleKlinikksystem("opprettet", booking, naa);
+  return { status: "reservert", gjennomgang: "venter på klinikkens bekreftelse", ...bekreftelse(booking) };
 }
 
 export interface BookingOversikt extends Booking {
@@ -385,6 +390,7 @@ export interface BookingOversikt extends Booking {
   behandler_navn: string;
   lesbar: string;
   status: "aktiv" | "avbestilt";
+  gjennomgang: Gjennomgang;
 }
 
 /** Alle bestillinger gjort via assistenten, nyeste først, for sekretærens gjennomgang i /admin. */
@@ -396,7 +402,7 @@ export async function hentBookingerTilGjennomgang(): Promise<BookingOversikt[]> 
     if (!b) {
       return {
         kode, behandling_id: "", behandler_id: "", tidspunkt: "", varighet_min: 0, navn: "", telefon: "", epost: "", opprettet: "",
-        behandling_navn: "", behandler_navn: "", lesbar: "", status: "avbestilt" as const,
+        behandling_navn: "", behandler_navn: "", lesbar: "", status: "avbestilt" as const, gjennomgang: "ny" as const,
       };
     }
     return {
@@ -405,6 +411,7 @@ export async function hentBookingerTilGjennomgang(): Promise<BookingOversikt[]> 
       behandler_navn: behandlerNavn(b.behandler_id),
       lesbar: formaterTidspunkt(b.tidspunkt),
       status: "aktiv" as const,
+      gjennomgang: b.gjennomgang ?? "ny",
     };
   });
 }
@@ -419,7 +426,7 @@ async function hentVerifisert(bookingkode: string, telefon: string): Promise<Boo
   }
   const booking = await hentLager().hent<Booking>(bookingNokkel(kode));
   // Samme svar uansett om koden eller telefonen er feil, så koder ikke kan gjettes.
-  if (!booking || booking.telefon !== tlf) {
+  if (!booking || booking.telefon !== tlf || booking.gjennomgang === "avvist") {
     throw new Brukerfeil("Fant ingen aktiv time med den bookingkoden og det telefonnummeret.");
   }
   return booking;
@@ -444,8 +451,10 @@ export async function flyttTime(
   }
   const gammel = formaterTidspunkt(booking.tidspunkt);
   await frigi(booking);
-  const flyttet: Booking = { ...booking, behandler_id: behandler.id, tidspunkt: `${dato}T${klokke(min)}` };
+  // Ny tid må gjennomgås på nytt av klinikken.
+  const flyttet: Booking = { ...booking, behandler_id: behandler.id, tidspunkt: `${dato}T${klokke(min)}`, gjennomgang: "ny", behandlet: undefined };
   await reserver(flyttet);
+  await varsleKlinikksystem("flyttet", flyttet, naa);
   return { status: "flyttet", fra: gammel, ...bekreftelse(flyttet) };
 }
 
@@ -453,7 +462,23 @@ export async function avbestillTime(input: { bookingkode: string; telefon: strin
   const booking = await hentVerifisert(input.bookingkode, input.telefon);
   await frigi(booking);
   await hentLager().slett(bookingNokkel(booking.kode));
+  await varsleKlinikksystem("avbestilt", booking);
   return { status: "avbestilt", bookingkode: booking.kode, var: formaterTidspunkt(booking.tidspunkt) };
+}
+
+/**
+ * Sekretærens gjennomgang i /admin. Bekreft: timen står. Avvis: tiden frigis, og bookingen
+ * kan ikke lenger endres av pasienten (klinikken tar kontakt). Varsler klinikksystemet.
+ */
+export async function behandleBooking(kode: string, handling: "bekreft" | "avvis", naa = new Date()): Promise<Booking> {
+  const booking = await hentLager().hent<Booking>(bookingNokkel(kode.trim().toUpperCase()));
+  if (!booking) throw new Brukerfeil("Fant ikke bestillingen. Den kan være avbestilt.");
+  if ((booking.gjennomgang ?? "ny") !== "ny") throw new Brukerfeil(`Bestillingen er allerede ${booking.gjennomgang}.`);
+  const oppdatert: Booking = { ...booking, gjennomgang: handling === "bekreft" ? "bekreftet" : "avvist", behandlet: naa.toISOString() };
+  if (handling === "avvis") await frigi(booking);
+  await hentLager().lagre(bookingNokkel(booking.kode), oppdatert, BOOKING_TTL_SEK);
+  await varsleKlinikksystem(handling === "bekreft" ? "bekreftet" : "avvist", oppdatert, naa);
+  return oppdatert;
 }
 
 export interface Henvendelse {

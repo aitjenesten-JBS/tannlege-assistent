@@ -6,7 +6,7 @@ import { epostHtml } from "@/lib/epostmal";
 import { lagIcs } from "@/lib/ics";
 
 const STATUSTEKST: Record<EpostStatus, string> = {
-  sendt: "Bekreftelse er sendt på e-post.",
+  sendt: "Kvittering er sendt på e-post. Du får en ny e-post når klinikken har bekreftet timen.",
   forhandsvisning: "Demo: e-post sendes ikke herfra. Slik ser bekreftelsen ut:",
   feilet: "E-posten kunne ikke sendes, men timen er bestilt. Slik ser bekreftelsen ut:",
 };
