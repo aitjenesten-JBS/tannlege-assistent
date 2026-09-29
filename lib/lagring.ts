@@ -72,12 +72,24 @@ let lager: Lager | undefined;
 
 export function hentLager(): Lager {
   if (!lager) {
-    const harRedis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
-    lager = harRedis ? redislager(Redis.fromEnv()) : minnelager();
+    if (harRedis()) {
+      lager = redislager(Redis.fromEnv());
+    } else {
+      // På Vercel lever hver funksjon kort og hver for seg: uten Redis forsvinner bookinger og
+      // samtaler mellom kall. Advar tydelig i loggen i stedet for å feile stille.
+      if (process.env.NODE_ENV === "production") {
+        console.warn("ADVARSEL: Upstash Redis er ikke konfigurert. Bruker minnelager, som ikke deles mellom serverless-kall.");
+      }
+      lager = minnelager();
+    }
   }
   return lager;
 }
 
+/** Upstash via Vercel-integrasjonen setter KV_REST_API_*, direkte fra Upstash UPSTASH_REDIS_REST_*. Redis.fromEnv() leser begge. */
 export function harRedis(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  return Boolean(
+    (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
+      (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN),
+  );
 }
