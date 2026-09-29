@@ -1,8 +1,8 @@
 # Tannlege-assistent
 
-Digital assistent for Torget Tannklinikk (tidligere Tannlegene Holm) i Fjordvik. Assistenten svarer på praktiske spørsmål og bestiller, flytter og avbestiller timer i en simulert kalender.
+Digital assistent for en norsk tannklinikk. Assistenten svarer på praktiske spørsmål, og bestiller, flytter og avbestiller timer i en simulert timebok. Bestillingene sendes videre til klinikkens system for gjennomgang.
 
-> Demo. Ikke tilknyttet klinikken. Ingen ekte pasientdata.
+> Porteføljeprosjekt og demo. Ikke tilknyttet noen klinikk. Ingen ekte pasientdata.
 
 <!-- GIF: booking fra start til bekreftelse -->
 
