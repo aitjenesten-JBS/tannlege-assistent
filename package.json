@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test lib/*.test.ts",
+    "chat": "tsx --env-file-if-exists=.env.local scripts/chat.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.129.0",

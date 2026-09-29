@@ -62,6 +62,6 @@
   "gebyr_ikke_mott": {
     "pris_kr": 750,
     "per_minutter": 30,
-    "beskrivelse": "Ikke møtt eller for sent avbestilt: 750 kr per avsatte 30 minutter"
+    "beskrivelse": "Ikke møtt til timen: 750 kr per avsatte 30 minutter"
   }
 }
